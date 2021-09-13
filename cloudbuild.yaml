@@ -1,0 +1,51 @@
+steps:
+    - name: 'gcr.io/cloud-builders/docker'
+      args: ['build', '-t', 'gcr.io/projet-group-a/result-camille','./result']
+      id: result
+    - name: 'gcr.io/cloud-builders/docker'
+      args: ['build', '-t', 'gcr.io/projet-group-a/worker-camille','./worker']
+      id: worker
+    - name: 'gcr.io/cloud-builders/docker'
+      args: ['build', '-t', 'gcr.io/projet-group-a/vote-camille','./vote']
+      id: vote
+    - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+      waitFor: [result]
+      entrypoint : gcloud
+      args : 
+        - 'run'
+        - 'deploy' 
+        - 'service-result-camille'
+        - '--image'
+        - 'gcr.io/projet-group-a/result-camille'
+        - '--region'
+        - 'us-central1'
+        - '--port'
+        - '4000'
+        - '--allow-unauthenticated'
+    - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+      waitFor: [worker]
+      entrypoint : gcloud
+      args : 
+        - 'run'
+        - 'deploy' 
+        - 'service-worker-camille'
+        - '--image'
+        - 'gcr.io/projet-group-a/worker-camille'
+        - '--region'
+        - 'us-central1'
+        - '--allow-unauthenticated'
+    - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+      waitFor: [vote]
+      entrypoint : gcloud
+      args : 
+        - 'run'
+        - 'deploy' 
+        - 'service-vote-camille'
+        - '--image'
+        - 'gcr.io/projet-group-a/vote-camille'
+        - '--region'
+        - 'us-central1'
+        - '--port'
+        - '80'
+        - '--allow-unauthenticated'
+images: ['gcr.io/projet-group-a/vote-camille', 'gcr.io/projet-group-a/worker-camille', 'gcr.io/projet-group-a/result-camille']
